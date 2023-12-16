@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std_unsigned.all;
 
-entity rtc_i2c is
+entity rtc_wrapper is
   generic (
     G_BOARD       : string;                                 -- Which platform are we running on.
     G_I2C_CLK_DIV : integer
@@ -35,9 +35,9 @@ entity rtc_i2c is
     scl_out_o     : out std_logic_vector( 7 downto 0);
     sda_out_o     : out std_logic_vector( 7 downto 0)
   );
-end entity rtc_i2c;
+end entity rtc_wrapper;
 
-architecture synthesis of rtc_i2c is
+architecture synthesis of rtc_wrapper is
 
   signal rtc_i2c_wait    : std_logic;
   signal rtc_i2c_ce      : std_logic;
@@ -55,7 +55,7 @@ architecture synthesis of rtc_i2c is
 
 begin
 
-  rtc_inst : entity work.rtc
+  rtc_controller_inst : entity work.rtc_controller
     generic map (
       G_BOARD => G_BOARD
     )
@@ -75,7 +75,7 @@ begin
       cpu_addr_o    => rtc_i2c_addr,
       cpu_wr_data_o => rtc_i2c_wr_data,
       cpu_rd_data_i => i2c_rd_data_o
-    ); -- rtc_inst
+    ); -- rtc_controller_inst
 
    qnice_arbit_inst : entity work.qnice_arbit
      port map (

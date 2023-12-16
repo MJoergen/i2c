@@ -2,10 +2,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std_unsigned.all;
 
-entity tb_rtc_controller is
-end entity tb_rtc_controller;
+entity tb_rtc_master is
+end entity tb_rtc_master;
 
-architecture simulation of tb_rtc_controller is
+architecture simulation of tb_rtc_master is
 
   signal clk           : std_logic := '1';
   signal rst           : std_logic := '1';
@@ -71,7 +71,7 @@ begin
   -- Instantiate DUT
   ----------------------------------------------
 
-  rtc_controller_inst : entity work.rtc_controller
+  rtc_master_inst : entity work.rtc_master
     generic map (
       G_BOARD => "MEGA65_R5"
     )
@@ -89,7 +89,7 @@ begin
       cpu_m_addr_o    => cpu_m_addr,
       cpu_m_wr_data_o => cpu_m_wr_data,
       cpu_m_rd_data_i => cpu_m_rd_data
-    ); -- rtc_controller_inst
+    ); -- rtc_master_inst
 
 
   ----------------------------------------------

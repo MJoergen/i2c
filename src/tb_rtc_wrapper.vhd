@@ -2,10 +2,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std_unsigned.all;
 
-entity tb_rtc is
-end entity tb_rtc;
+entity tb_rtc_wrapper is
+end entity tb_rtc_wrapper;
 
-architecture simulation of tb_rtc is
+architecture simulation of tb_rtc_wrapper is
 
   signal clk         : std_logic := '1';
   signal rst         : std_logic := '1';
@@ -178,8 +178,9 @@ begin
   -- Instantiate DUT
   ----------------------------------------------
 
-  i_rtc_i2c : entity work.rtc_i2c
+  rtc_wrapper_inst : entity work.rtc_wrapper
     generic map (
+      G_BOARD       => "MEGA65_R5",
       G_I2C_CLK_DIV => 40
     )
     port map (
@@ -202,7 +203,7 @@ begin
       sda_in_i      => sda_in,
       scl_out_o     => scl_out,
       sda_out_o     => sda_out
-    ); -- i_rtc_i2c
+    ); -- rtc_wrapper_inst
 
 
   sda <= sda_out(0) when sda_out(0) = '0' else 'H';
