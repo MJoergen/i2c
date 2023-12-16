@@ -11,12 +11,13 @@ entity i2c_mem_sim is
    );
    port (
       -- TB signals
-      clk_i  : in    std_logic;
-      rst_i  : in    std_logic;
+      clk_i   : in    std_logic;
+      rst_i   : in    std_logic;
+      mem07_o : out   unsigned(63 downto 0);
 
       -- I2C signals
-      sda_io : inout std_logic;
-      scl_io : inout std_logic
+      sda_io  : inout std_logic;
+      scl_io  : inout std_logic
    );
 end entity i2c_mem_sim;
 
@@ -52,6 +53,8 @@ architecture sim of i2c_mem_sim is
   );
 
 begin
+
+  mem07_o <= ram(7) & ram(6) & ram(5) & ram(4) & ram(3) & ram(2) & ram(1) & ram(0);
 
   i_i2c_slave : entity work.i2c_slave
   generic map (
