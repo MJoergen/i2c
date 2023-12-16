@@ -60,21 +60,21 @@ begin
       G_BOARD => G_BOARD
     )
     port map (
-      clk_i         => clk_i,
-      rst_i         => rst_i,
-      cpu_wait_o    => rtc_wait_o,
-      cpu_ce_i      => rtc_ce_i,
-      cpu_we_i      => rtc_we_i,
-      cpu_addr_i    => rtc_addr_i,
-      cpu_wr_data_i => rtc_wr_data_i,
-      cpu_rd_data_o => rtc_rd_data_o,
-      rtc_o         => rtc_o,
-      cpu_wait_i    => i2c_wait_o,
-      cpu_ce_o      => rtc_i2c_ce,
-      cpu_we_o      => rtc_i2c_we,
-      cpu_addr_o    => rtc_i2c_addr,
-      cpu_wr_data_o => rtc_i2c_wr_data,
-      cpu_rd_data_i => i2c_rd_data_o
+      clk_i           => clk_i,
+      rst_i           => rst_i,
+      cpu_s_wait_o    => rtc_wait_o,
+      cpu_s_ce_i      => rtc_ce_i,
+      cpu_s_we_i      => rtc_we_i,
+      cpu_s_addr_i    => rtc_addr_i,
+      cpu_s_wr_data_i => rtc_wr_data_i,
+      cpu_s_rd_data_o => rtc_rd_data_o,
+      rtc_o           => rtc_o,
+      cpu_m_wait_i    => i2c_wait_o,
+      cpu_m_ce_o      => rtc_i2c_ce,
+      cpu_m_we_o      => rtc_i2c_we,
+      cpu_m_addr_o    => rtc_i2c_addr,
+      cpu_m_wr_data_o => rtc_i2c_wr_data,
+      cpu_m_rd_data_i => i2c_rd_data_o
     ); -- rtc_controller_inst
 
    qnice_arbit_inst : entity work.qnice_arbit

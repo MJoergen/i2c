@@ -108,8 +108,8 @@ begin
 
    rtc_o <= rtc_internal;
 
-   -- Instantiate the RTC controller
-   rtc_controller_inst : entity work.rtc_controller
+   -- Instantiate the RTC master
+   rtc_master_inst : entity work.rtc_master
      generic map (
        G_BOARD => G_BOARD
      )
@@ -119,15 +119,15 @@ begin
        rtc_busy_o      => rtc_busy,     -- Command bit 0
        rtc_read_i      => rtc_read,     -- Command bit 1
        rtc_write_i     => rtc_write,    -- Command bit 2
-       rtc_wr_data_i   => rtc_internal, -- Copy to external RTC
-       rtc_rd_data_o   => rtc_external, -- Read from external RTC
+       rtc_wr_data_i   => rtc_internal(63 downto 0), -- Copy to external RTC
+       rtc_rd_data_o   => rtc_external(63 downto 0), -- Read from external RTC
        cpu_m_wait_i    => cpu_m_wait_i,
        cpu_m_ce_o      => cpu_m_ce_o,
        cpu_m_we_o      => cpu_m_we_o,
        cpu_m_addr_o    => cpu_m_addr_o,
        cpu_m_wr_data_o => cpu_m_wr_data_o,
        cpu_m_rd_data_i => cpu_m_rd_data_i
-     ); -- rtc_controller_inst
+     ); -- rtc_master_inst
 
    tick_proc : process (clk_i)
    begin
