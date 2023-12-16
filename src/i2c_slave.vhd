@@ -29,6 +29,7 @@ use ieee.numeric_std.all;
 
 entity i2c_slave is
   generic (
+    G_DEBUG              : boolean := false;
     G_CLOCK_FREQ         : natural := 1e7;
     G_I2C_ADDRESS        : unsigned(6 downto 0) := b"0000000"
   );
@@ -239,7 +240,9 @@ begin
         when write_bit =>
           if scl_falling_edge then
             sda_out <= output_shift(7);
-            report "outputting bit = " & std_logic'image(output_shift(7));
+            if G_DEBUG then
+              report "I2C_SLAVE : outputting bit = " & std_logic'image(output_shift(7));
+            end if;
             write_timeout_counter <= C_WRITE_TIMEOUT;
             write_state <= wait_scl_rising;
           end if;
@@ -267,7 +270,9 @@ begin
           end if;
 
         when write_end =>
-          report "write_end: releasing SDA";
+          if G_DEBUG then
+            report "I2C_SLAVE : write_end: releasing SDA";
+          end if;
           sda_out <= '1';
           if (not write_ack) and (not write_byte) then
             write_state <= idle;
@@ -339,7 +344,9 @@ begin
           if read_state = read_end then
             data_in_o <= input_shift;
             data_in_valid_o <= true;
-                                                      report "Saw a byte";
+            if G_DEBUG then
+              report "I2C_SLAVE : Saw a byte";
+            end if;
             read_byte <= false;
             control_state <= start_write_ack;
           end if;
@@ -408,8 +415,8 @@ begin
   scl_delayed    <= scl_sampled(2);
 
   -- detect start/stop condition
-  start_detected_delayed <= (scl_delayed = '1') and sda_falling_edge and (not (scl_rising_edge or scl_falling_edge));
-  stop_detected_delayed  <= (scl_delayed = '1') and sda_rising_edge and (not (scl_rising_edge or scl_falling_edge));
+  start_detected_delayed <= (scl_delayed = '1' or scl_delayed = 'H') and sda_falling_edge and (not (scl_rising_edge or scl_falling_edge));
+  stop_detected_delayed  <= (scl_delayed = '1' or scl_delayed = 'H') and sda_rising_edge and (not (scl_rising_edge or scl_falling_edge));
 
   -- copy to host
   start_detected_o <= start_detected_delayed;

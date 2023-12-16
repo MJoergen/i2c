@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 entity i2c_mem_sim is
    generic (
+     G_DEBUG       : boolean := false;
      G_INIT        : std_logic_vector(63 downto 0) := X"0000000000000000";
      G_CLOCK_FREQ  : natural := 1e7;
      G_I2C_ADDRESS : unsigned(6 downto 0) := b"0000000"
@@ -98,7 +99,9 @@ begin
 
            when WAIT_FOR_WR_DATA_ST =>
               if data_in_valid then
-                 report "Write " & to_hstring(data_in) & " to address " & to_hstring(addr);
+                 if G_DEBUG then
+                    report "I2C_MEM_SIM : Write " & to_hstring(data_in) & " to address " & to_hstring(addr);
+                 end if;
                  ram(to_integer(addr)) <= data_in;
                  state <= WAIT_FOR_END_ST;
               end if;
@@ -109,7 +112,9 @@ begin
            when WAIT_FOR_RD_DATA_ST =>
               if data_out_requested then
                  data_out <= ram(to_integer(addr));
-                 report "Reading " & to_hstring(ram(to_integer(addr))) & " from address " & to_hstring(addr);
+                 if G_DEBUG then
+                    report "I2C_MEM_SIM : Reading " & to_hstring(ram(to_integer(addr))) & " from address " & to_hstring(addr);
+                 end if;
                  addr <= addr + 1;
                  state <= WAIT_FOR_RD_DATA_ACK_ST;
               end if;

@@ -2,10 +2,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity tb_i2c is
-end entity tb_i2c;
+entity tb_i2c_controller is
+end entity tb_i2c_controller;
 
-architecture sim of tb_i2c is
+architecture sim of tb_i2c_controller is
+
+  constant REG_I2C_DATA     : std_logic_vector(7 downto 0) := X"00";
+  constant REG_I2C_CONFIG   : std_logic_vector(7 downto 0) := X"F0";
+  constant REG_I2C_STATUS   : std_logic_vector(7 downto 0) := X"F1";
+  constant C_I2C_ADDRESS    : std_logic_vector(7 downto 0) := X"51";
 
   signal clk                : std_logic := '1';
   signal rst                : std_logic := '1';
@@ -17,15 +22,13 @@ architecture sim of tb_i2c is
   signal cpu_addr           : std_logic_vector( 7 downto 0);
   signal cpu_wr_data        : std_logic_vector(15 downto 0);
   signal cpu_rd_data        : std_logic_vector(15 downto 0);
-  signal scl_in             : std_logic;
-  signal sda_in             : std_logic;
-  signal scl_tri            : std_logic;
-  signal sda_tri            : std_logic;
-  signal scl_out            : std_logic;
-  signal sda_out            : std_logic;
+  signal scl_in             : std_logic_vector( 7 downto 0) := (others => 'H');
+  signal sda_in             : std_logic_vector( 7 downto 0) := (others => 'H');
+  signal scl_out            : std_logic_vector( 7 downto 0) := (others => 'H');
+  signal sda_out            : std_logic_vector( 7 downto 0) := (others => 'H');
 
   signal sda                : std_logic := 'H';
-  signal scl                : std_logic := '1';
+  signal scl                : std_logic := 'H';
 
 begin
 
@@ -47,22 +50,24 @@ begin
       cpu_rd_data_o => cpu_rd_data,
       scl_in_i      => scl_in,
       sda_in_i      => sda_in,
-      scl_tri_o     => scl_tri,
-      sda_tri_o     => sda_tri,
       scl_out_o     => scl_out,
       sda_out_o     => sda_out
     ); -- i_i2c_controller
 
-  sda <= sda_out when sda_tri = '0' and sda_out = '0' else 'H';
-  scl <= scl_out when scl_tri = '0' and scl_out = '0' else '1';
-  sda_in <= sda;
-  scl_in <= scl;
+  sda <= '0' when sda_out(0) = '0' else 'H';
+  scl <= '0' when scl_out(0) = '0' else 'H';
+  sda_in(0) <= sda;
+  scl_in(0) <= scl;
+
+  -- Pull-up
+  scl <= 'H';
+  sda <= 'H';
 
   -- A simple I2C memory
   i_i2c_mem_sim : entity work.i2c_mem_sim
      generic map (
        G_CLOCK_FREQ  => 24_000_000,
-       G_I2C_ADDRESS => "1010001" -- 0x51
+       G_I2C_ADDRESS => unsigned(C_I2C_ADDRESS(6 downto 0))
      )
      port map (
         clk_i  => clk,
@@ -120,15 +125,15 @@ begin
       addr : in std_logic_vector(7 downto 0);
       data : in std_logic_vector(7 downto 0)) is
     begin
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
-      cpu_write( X"00", addr & data); -- Data
-      cpu_write( X"80", X"02" & i2c(6 downto 0) & "0"); -- Config
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
+      cpu_write( REG_I2C_DATA, addr & data); -- Data
+      cpu_write( REG_I2C_CONFIG, X"02" & i2c(6 downto 0) & "0"); -- Config
       wait for 3 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0002"); -- Status: BUSY
+      cpu_verify(REG_I2C_STATUS, X"0002"); -- Status: BUSY
       wait for 60 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
     end procedure i2c_write;
 
     procedure i2c_verify (
@@ -136,23 +141,23 @@ begin
       addr : in std_logic_vector(7 downto 0);
       data : in std_logic_vector(7 downto 0)) is
     begin
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
-      cpu_write( X"00", addr & X"00");
-      cpu_write( X"80", X"01" & i2c(6 downto 0) & "0");
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
+      cpu_write( REG_I2C_DATA, addr & X"00");
+      cpu_write( REG_I2C_CONFIG, X"01" & i2c(6 downto 0) & "0");
       wait for 3 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0002"); -- Status: BUSY
+      cpu_verify(REG_I2C_STATUS, X"0002"); -- Status: BUSY
       wait for 40 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
-      cpu_write( X"80", X"01" & i2c(6 downto 0) & "1");
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
+      cpu_write( REG_I2C_CONFIG, X"01" & i2c(6 downto 0) & "1");
       wait for 3 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0002"); -- Status: BUSY
+      cpu_verify(REG_I2C_STATUS, X"0002"); -- Status: BUSY
       wait for 40 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
-      cpu_verify(X"00", data & X"00");
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
+      cpu_verify(REG_I2C_DATA, data & X"00");
     end procedure i2c_verify;
 
     procedure i2c_verify2 (
@@ -160,23 +165,23 @@ begin
       addr : in std_logic_vector(7 downto 0);
       data : in std_logic_vector(15 downto 0)) is
     begin
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
-      cpu_write( X"00", addr & X"00");
-      cpu_write( X"80", X"01" & i2c(6 downto 0) & "0");
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
+      cpu_write( REG_I2C_DATA, addr & X"00");
+      cpu_write( REG_I2C_CONFIG, X"01" & i2c(6 downto 0) & "0");
       wait for 3 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0002"); -- Status: BUSY
+      cpu_verify(REG_I2C_STATUS, X"0002"); -- Status: BUSY
       wait for 40 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
-      cpu_write( X"80", X"02" & i2c(6 downto 0) & "1");
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
+      cpu_write( REG_I2C_CONFIG, X"02" & i2c(6 downto 0) & "1");
       wait for 3 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0002"); -- Status: BUSY
+      cpu_verify(REG_I2C_STATUS, X"0002"); -- Status: BUSY
       wait for 60 us;
       wait until rising_edge(clk);
-      cpu_verify(X"84", X"0001"); -- Status: IDLE
-      cpu_verify(X"00", data);
+      cpu_verify(REG_I2C_STATUS, X"0001"); -- Status: IDLE
+      cpu_verify(REG_I2C_DATA, data);
     end procedure i2c_verify2;
 
   begin
@@ -207,12 +212,12 @@ begin
     cpu_verify(X"03", X"8899");
 
     -- Verify communication with the I2C device
-    i2c_write( X"51", X"12", X"34"); -- MEM[0x12] := 0x34
-    i2c_write( X"51", X"13", X"78"); -- MEM[0x13] := 0x78
-    i2c_verify(X"51", X"12", X"34"); -- MEM[0x12] == 0x34
-    i2c_verify(X"51", X"13", X"78"); -- MEM[0x13] == 0x78
-    i2c_write( X"51", X"13", X"9A"); -- MEM[0x13] := 0x9A
-    i2c_verify2(X"51", X"12", X"349A"); -- MEM[0x12-0x13] == 0x349A
+    i2c_write(  C_I2C_ADDRESS, X"12", X"34");   -- MEM[0x12] := 0x34
+    i2c_write(  C_I2C_ADDRESS, X"13", X"78");   -- MEM[0x13] := 0x78
+    i2c_verify( C_I2C_ADDRESS, X"12", X"34");   -- MEM[0x12] == 0x34
+    i2c_verify( C_I2C_ADDRESS, X"13", X"78");   -- MEM[0x13] == 0x78
+    i2c_write(  C_I2C_ADDRESS, X"13", X"9A");   -- MEM[0x13] := 0x9A
+    i2c_verify2(C_I2C_ADDRESS, X"12", X"349A"); -- MEM[0x12-0x13] == 0x349A
 
     wait for 3 us;
     running <= '0';
