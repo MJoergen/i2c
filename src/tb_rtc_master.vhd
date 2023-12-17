@@ -29,6 +29,11 @@ architecture simulation of tb_rtc_master is
 
   signal rtc_value   : unsigned(63 downto 0);
 
+  --                                                     WD YY MM DD HH MM SS ss
+  constant C_ZERO_RTC_VALUE : unsigned(63 downto 0) := X"00_00_01_01_00_00_00_00";
+  constant C_INIT_RTC_VALUE : unsigned(63 downto 0) := X"06_23_12_17_08_22_45_79";
+  constant C_NEW_RTC_VALUE  : unsigned(63 downto 0) := X"06_99_12_31_23_59_59_99";
+
 begin
 
   clk <= running and not clk after 10 ns; -- 50 MHz
@@ -71,8 +76,8 @@ begin
     rtc_write <= '0';
     wait until rst = '0';
     wait until rising_edge(clk);
-    assert std_logic_vector(rtc_value) = X"88_77_66_55_44_33_22_11";
-    rtc_verify_data("START", X"00_00_01_01_00_00_00_00");
+    assert rtc_value = C_INIT_RTC_VALUE;
+    rtc_verify_data("START", std_logic_vector(C_ZERO_RTC_VALUE));
 
     -- Verify transaction is started right after reset
     wait until rising_edge(clk);
@@ -83,11 +88,11 @@ begin
     -- Verify correct value after reset
     wait until rtc_busy = '0';
     wait until rising_edge(clk);
-    rtc_verify_data("READ1", X"88_77_66_55_44_33_22_11");
+    rtc_verify_data("READ1", std_logic_vector(C_INIT_RTC_VALUE));
 
     -- Verify new value can be set
-    rtc_write_data(X"06_99_12_31_23_59_59_99");
-    assert std_logic_vector(rtc_value) = X"06_99_12_31_23_59_59_99";
+    rtc_write_data(std_logic_vector(C_NEW_RTC_VALUE));
+    assert rtc_value = C_NEW_RTC_VALUE;
 
     rtc_read <= '1';
     wait until rising_edge(clk);
@@ -98,8 +103,8 @@ begin
     wait until rtc_busy = '0';
     wait until rising_edge(clk);
 
-    rtc_verify_data("READ2", X"06_99_12_31_23_59_59_99");
-    assert std_logic_vector(rtc_value) = X"06_99_12_31_23_59_59_99";
+    rtc_verify_data("READ2", std_logic_vector(C_NEW_RTC_VALUE));
+    assert rtc_value = C_NEW_RTC_VALUE;
 
     report "Test completed";
     running <= '0';
@@ -134,6 +139,7 @@ begin
 
    rtc_sim_inst : entity work.rtc_sim
       generic map (
+         G_INIT  => std_logic_vector(C_INIT_RTC_VALUE),
          G_BOARD => G_BOARD
       )
       port map (

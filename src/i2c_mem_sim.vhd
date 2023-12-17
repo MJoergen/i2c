@@ -54,6 +54,8 @@ architecture sim of i2c_mem_sim is
 
 begin
 
+  scl_io <= 'H';
+
   mem07_o <= ram(7) & ram(6) & ram(5) & ram(4) & ram(3) & ram(2) & ram(1) & ram(0);
 
   i_i2c_slave : entity work.i2c_slave

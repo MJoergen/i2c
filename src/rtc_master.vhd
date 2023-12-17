@@ -121,7 +121,7 @@ architecture synthesis of rtc_master is
     2 => (WRITE_CMD,     X"F0", X"01A2"),   -- Send one byte, 0x01, to RTC
     3 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
     4 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-    5 => (WRITE_CMD,     X"F0", X"08A3"),   -- Receive seven bytes from RTC
+    5 => (WRITE_CMD,     X"F0", X"08A3"),   -- Receive eight bytes from RTC
     6 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
     7 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
     8 => (SHIFT_IN_CMD,  X"00", X"0004"),   -- Read seven bytes from buffer
@@ -136,7 +136,7 @@ architecture synthesis of rtc_master is
     3 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
     4 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
     5 => (SHIFT_OUT_CMD, X"00", X"0004"),   -- Prepare to write to RTC
-    6 => (WRITE_CMD,     X"F0", X"08A2"),   -- Send seven bytes from RTC
+    6 => (WRITE_CMD,     X"F0", X"08A2"),   -- Send eight bytes from RTC
     7 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
     8 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
     9 => (END_CMD,       X"00", X"0000")
@@ -167,7 +167,7 @@ architecture synthesis of rtc_master is
       return arg;
     else
       -- Valid for R4 and R5
-      return arg(63 downto 56) & arg(31 downto 24) & arg(55 downto 32) & arg(23 downto 0);
+      return arg(39 downto 32) & arg(63 downto 40) & arg(31 downto 0);
     end if;
   end function post_read;
 
@@ -178,7 +178,7 @@ architecture synthesis of rtc_master is
       return arg;
     else
       -- Valid for R4 and R5
-      return arg(63 downto 56) & arg(31 downto 24) & arg(55 downto 32) & arg(23 downto 0);
+      return arg(55 downto 32) & arg(63 downto 56) & arg(31 downto 0);
     end if;
   end function pre_write;
 
