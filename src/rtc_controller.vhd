@@ -60,7 +60,8 @@ use ieee.numeric_std_unsigned.all;
 
 entity rtc_controller is
   generic (
-    G_BOARD : string                                         -- Which platform are we running on.
+    G_CLK_SPEED_HZ : natural := 50_000_000;
+    G_BOARD        : string                     -- Which platform are we running on.
   );
   port (
     clk_i           : in  std_logic;
@@ -93,13 +94,14 @@ architecture synthesis of rtc_controller is
    signal rtc_write    : std_logic;
    signal rtc_busy     : std_logic;
    signal rtc_internal : std_logic_vector(64 downto 0);
-   signal rtc_external : std_logic_vector(64 downto 0);
+   signal rtc_external : std_logic_vector(63 downto 0);
+   signal rtc_busy_d   : std_logic;
+   signal rtc_reading  : std_logic;
 
    signal running      : std_logic;
 
-   constant CLK_SPEED_HZ : natural := 50_000_000;
    signal tick         : std_logic;
-   signal tick_counter : natural range 0 to CLK_SPEED_HZ/100-1;
+   signal tick_counter : natural range 0 to G_CLK_SPEED_HZ/100-1;
    constant C_MAX      : std_logic_vector(55 downto 0) := X"99_12_31_23_59_59_99";
 
 begin
@@ -110,29 +112,29 @@ begin
 
    -- Instantiate the RTC master
    rtc_master_inst : entity work.rtc_master
-     generic map (
-       G_BOARD => G_BOARD
-     )
-     port map (
-       clk_i           => clk_i,
-       rst_i           => rst_i,
-       rtc_busy_o      => rtc_busy,     -- Command bit 0
-       rtc_read_i      => rtc_read,     -- Command bit 1
-       rtc_write_i     => rtc_write,    -- Command bit 2
-       rtc_wr_data_i   => rtc_internal(63 downto 0), -- Copy to external RTC
-       rtc_rd_data_o   => rtc_external(63 downto 0), -- Read from external RTC
-       cpu_m_wait_i    => cpu_m_wait_i,
-       cpu_m_ce_o      => cpu_m_ce_o,
-       cpu_m_we_o      => cpu_m_we_o,
-       cpu_m_addr_o    => cpu_m_addr_o,
-       cpu_m_wr_data_o => cpu_m_wr_data_o,
-       cpu_m_rd_data_i => cpu_m_rd_data_i
-     ); -- rtc_master_inst
+      generic map (
+         G_BOARD => G_BOARD
+      )
+      port map (
+         clk_i           => clk_i,
+         rst_i           => rst_i,
+         rtc_busy_o      => rtc_busy,     -- Command bit 0
+         rtc_read_i      => rtc_read,     -- Command bit 1
+         rtc_write_i     => rtc_write,    -- Command bit 2
+         rtc_wr_data_i   => rtc_internal(63 downto 0), -- Copy to external RTC
+         rtc_rd_data_o   => rtc_external,              -- Read from external RTC
+         cpu_m_wait_i    => cpu_m_wait_i,
+         cpu_m_ce_o      => cpu_m_ce_o,
+         cpu_m_we_o      => cpu_m_we_o,
+         cpu_m_addr_o    => cpu_m_addr_o,
+         cpu_m_wr_data_o => cpu_m_wr_data_o,
+         cpu_m_rd_data_i => cpu_m_rd_data_i
+      ); -- rtc_master_inst
 
    tick_proc : process (clk_i)
    begin
       if rising_edge(clk_i) then
-         if tick_counter = CLK_SPEED_HZ/100 - 1 then
+         if tick_counter = G_CLK_SPEED_HZ/100 - 1 then
             tick <= '1';
             tick_counter <= 0;
          else
@@ -163,6 +165,8 @@ begin
 
    begin
       if rising_edge(clk_i) then
+         rtc_write <= '0';
+         rtc_read  <= '0';
          if tick = '1' and running = '1' then
             for i in 0 to C_MAX'length/8-1 loop
                -- If incrementing DayOfMonth, then increment DayOfWeek
@@ -187,20 +191,29 @@ begin
                running <= cpu_s_wr_data_i(0);
             end if;
             if cpu_s_addr_i = X"09" and running = '1' then
-               rtc_read  <= cpu_s_wr_data_i(1);
-               rtc_write <= cpu_s_wr_data_i(2);
+               rtc_reading <= cpu_s_wr_data_i(1);
+               rtc_read    <= cpu_s_wr_data_i(1);
+               rtc_write   <= cpu_s_wr_data_i(2);
             end if;
          end if;
 
          -- Copy external to internal
-         if rtc_external(64) /= rtc_internal(64) or rst_i = '1' then
-            rtc_internal <= rtc_external;
+         rtc_busy_d <= rtc_busy;
+         if rtc_busy_d = '1' and rtc_busy = '0' then
+            if rtc_reading = '1' then
+               rtc_reading  <= '0';
+               rtc_internal(55 downto  0) <= rtc_external(63 downto 8);
+               rtc_internal(63 downto 56) <= X"40";
+               rtc_internal(64) <= not rtc_internal(64);
+            end if;
          end if;
 
          if rst_i = '1' then
-            rtc_read  <= '0';
-            rtc_write <= '0';
-            running   <= '1';
+            rtc_reading  <= '1';
+            rtc_read     <= '0';
+            rtc_write    <= '0';
+            running      <= '1';
+            rtc_internal <= "0" & X"40_00_00_01_01_00_00_00";
          end if;
       end if;
    end process rtc_proc;

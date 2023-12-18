@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
--- Internal format
+-- RTC format:
 -- Bits  7 -  0 : 1/100 Seconds (BCD format, 0x00-0x99)
 -- Bits 15 -  8 : Seconds       (BCD format, 0x00-0x60)
 -- Bits 23 - 16 : Minutes       (BCD format, 0x00-0x59)
@@ -11,16 +11,6 @@ use ieee.numeric_std.all;
 -- Bits 47 - 40 : Month         (BCD format, 0x01-0x12)
 -- Bits 55 - 48 : Year          (BCD format, 0x00-0x99)
 -- Bits 63 - 56 : DayOfWeek     (0x00-0x06)
-
--- R5 format
--- 00 : 100th
--- 01 : Seconds
--- 02 : Minutes
--- 03 : Hours
--- 04 : Weekday
--- 05 : Date
--- 06 : Month
--- 07 : Year
 
 entity rtc_sim is
    generic (

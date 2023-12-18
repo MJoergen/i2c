@@ -27,6 +27,11 @@ architecture simulation of tb_rtc_controller is
    signal cpu_i2c_addr      : std_logic_vector( 7 downto 0);
    signal cpu_i2c_wr_data   : std_logic_vector(15 downto 0);
    signal cpu_i2c_rd_data   : std_logic_vector(15 downto 0);
+   signal rtc_sim_value     : unsigned(63 downto 0);
+
+   --                                                              WD YY MM DD HH MM SS ss
+   constant C_RESET_RTC_VALUE : std_logic_vector(63 downto 0) := X"00_00_01_01_00_00_00_00";
+   constant C_INIT_RTC_VALUE  : std_logic_vector(63 downto 0) := X"06_23_12_17_08_22_45_79";
 
 begin
 
@@ -87,9 +92,7 @@ begin
 
       wait until rst = '0';
       wait until rising_edge(clk);
-      assert rtc = "0" & X"4000000101000000"
-         report "Incorrect rtc start";
-      
+
       cpu_verify(X"00", X"00" & rtc( 7 downto  0)); -- 100ths
       cpu_verify(X"01", X"00" & rtc(15 downto  8)); -- Seconds
       cpu_verify(X"02", X"00" & rtc(23 downto 16)); -- Minutes
@@ -99,8 +102,38 @@ begin
       cpu_verify(X"06", X"00" & rtc(55 downto 48)); -- Year since 2000
       cpu_verify(X"07", X"00" & rtc(63 downto 56)); -- DayOfWeek
       cpu_verify(X"08", X"0001");                   -- Internal clock is running
-      cpu_verify(X"09", X"0000");                   -- Command
+      cpu_verify(X"09", X"0001");                   -- I2C is busy
 
+      assert rtc_sim_value = unsigned(C_INIT_RTC_VALUE)
+         report "Incorrect rtc_sim_value start. Got: " & to_hstring(rtc_sim_value) &
+         ", expected: " & to_hstring(C_INIT_RTC_VALUE);
+
+      assert rtc = "0" & X"40" & C_RESET_RTC_VALUE(63 downto 8)
+         report "Incorrect rtc start. Got: " & to_hstring(rtc) &
+         ", expected: " & to_hstring("0" & X"40" & C_RESET_RTC_VALUE(63 downto 8));
+
+
+      wait for 200 us;
+      wait until rising_edge(clk);
+
+      cpu_verify(X"00", X"00" & rtc( 7 downto  0)); -- 100ths
+      cpu_verify(X"01", X"00" & rtc(15 downto  8)); -- Seconds
+      cpu_verify(X"02", X"00" & rtc(23 downto 16)); -- Minutes
+      cpu_verify(X"03", X"00" & rtc(31 downto 24)); -- Hours
+      cpu_verify(X"04", X"00" & rtc(39 downto 32)); -- DayOfMongth
+      cpu_verify(X"05", X"00" & rtc(47 downto 40)); -- Month
+      cpu_verify(X"06", X"00" & rtc(55 downto 48)); -- Year since 2000
+      cpu_verify(X"07", X"00" & rtc(63 downto 56)); -- DayOfWeek
+      cpu_verify(X"08", X"0001");                   -- Internal clock is running
+      cpu_verify(X"09", X"0000");                   -- I2C is idle
+
+      assert rtc_sim_value = unsigned(C_INIT_RTC_VALUE)
+         report "Incorrect rtc_sim_value 1. Got: " & to_hstring(rtc_sim_value) &
+         ", expected: " & to_hstring(C_INIT_RTC_VALUE);
+
+      assert rtc = "1" & X"40" & C_INIT_RTC_VALUE(63 downto 8)
+         report "Incorrect rtc 1. Got: " & to_hstring(rtc) &
+         ", expected: " & to_hstring("0" & X"40" & C_INIT_RTC_VALUE(63 downto 8));
 
       wait until rising_edge(clk);
       report "Test completed";
@@ -138,7 +171,7 @@ begin
 
    rtc_sim_inst : entity work.rtc_sim
    generic map (
-      G_INIT  => (others => '0'),
+      G_INIT  => C_INIT_RTC_VALUE,
       G_BOARD => G_BOARD
    )
    port map (
@@ -150,7 +183,7 @@ begin
       cpu_addr_i    => cpu_i2c_addr,
       cpu_wr_data_i => cpu_i2c_wr_data,
       cpu_rd_data_o => cpu_i2c_rd_data,
-      rtc_o         => open
+      rtc_o         => rtc_sim_value
    ); -- rtc_sim_inst
 
 end architecture simulation;
