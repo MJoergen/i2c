@@ -22,7 +22,7 @@ tb_rtc_wrapper.vhd"
 #ghdl compile --std=08 $SRC -r tb_i2c_controller --stop-time=1000us --wave=i2c_controller.ghw
 #gtkwave i2c_controller.ghw i2c_controller.gtkw
 
-ghdl compile --std=08 $SRC -r tb_rtc_master -gG_BOARD=MEGA65_R5 --stop-time=1000us --wave=rtc_master.ghw
+ghdl compile --std=08 $SRC -r tb_rtc_master -gG_BOARD=MEGA65_R3 --stop-time=1000us --wave=rtc_master.ghw
 gtkwave rtc_master.ghw rtc_master.gtkw
 
 #ghdl compile --std=08 $SRC -r tb_rtc_wrapper --stop-time=200us --wave=rtc_wrapper.ghw

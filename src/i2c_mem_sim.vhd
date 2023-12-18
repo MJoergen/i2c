@@ -35,8 +35,8 @@ architecture sim of i2c_mem_sim is
 
   type state_t is (IDLE_ST, WAIT_FOR_END_ST,
   WAIT_FOR_WR_ADDR_ST, WAIT_FOR_WR_ADDR_END_ST, WAIT_FOR_WR_DATA_ST,
-  WAIT_FOR_RD_ADDR_ST, WAIT_FOR_RD_ADDR_END_ST, WAIT_FOR_RD_DATA_ST,
-  WAIT_FOR_RD_DATA_ACK_ST);
+  WAIT_FOR_WR_DATA_END_ST, WAIT_FOR_RD_ADDR_ST, WAIT_FOR_RD_ADDR_END_ST,
+  WAIT_FOR_RD_DATA_ST, WAIT_FOR_RD_DATA_ACK_ST);
   signal state : state_t := IDLE_ST;
 
   type ram_t is array (natural range <>) of unsigned(7 downto 0);
@@ -108,10 +108,16 @@ begin
                     report "I2C_MEM_SIM : Write " & to_hstring(data_in) & " to address " & to_hstring(addr);
                  end if;
                  ram(to_integer(addr)) <= data_in;
-                 state <= WAIT_FOR_END_ST;
+                 addr <= addr + 1;
+                 state <= WAIT_FOR_WR_DATA_END_ST;
               end if;
               if not transfer_started then
                  state <= IDLE_ST;
+              end if;
+
+           when WAIT_FOR_WR_DATA_END_ST =>
+              if not data_in_valid then
+                 state <= WAIT_FOR_WR_DATA_ST;
               end if;
 
            when WAIT_FOR_RD_DATA_ST =>

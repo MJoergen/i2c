@@ -88,15 +88,11 @@ architecture synthesis of rtc_master is
   constant C_ACTION_LIST_WRITE_R3 : action_list_t := (
     -- This writes to the RTC
     0 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-    1 => (WRITE_CMD,     X"00", X"0000"),   -- Prepare to write to RTC
-    2 => (WRITE_CMD,     X"F0", X"01DE"),   -- Send one byte, 0x01, to RTC
+    1 => (SHIFT_OUT_CMD, X"00", X"0005"),   -- Prepare to write to RTC
+    2 => (WRITE_CMD,     X"F0", X"08DE"),   -- Send eight bytes from RTC
     3 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
     4 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-    5 => (SHIFT_OUT_CMD, X"00", X"0004"),   -- Prepare to write to RTC
-    6 => (WRITE_CMD,     X"F0", X"07DE"),   -- Send seven bytes from RTC
-    7 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
-    8 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-    9 => (END_CMD,       X"00", X"0000")
+    5 => (END_CMD,       X"00", X"0000")
    );
 
   -- For the R5 board:
@@ -131,15 +127,11 @@ architecture synthesis of rtc_master is
   constant C_ACTION_LIST_WRITE_R5 : action_list_t := (
     -- This writes to the RTC
     0 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-    1 => (WRITE_CMD,     X"00", X"0000"),   -- Prepare to write to RTC
-    2 => (WRITE_CMD,     X"F0", X"01A2"),   -- Send one byte, 0x01, to RTC
+    1 => (SHIFT_OUT_CMD, X"00", X"0005"),   -- Prepare to write to RTC
+    2 => (WRITE_CMD,     X"F0", X"09A2"),   -- Send nine bytes from RTC
     3 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
     4 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-    5 => (SHIFT_OUT_CMD, X"00", X"0004"),   -- Prepare to write to RTC
-    6 => (WRITE_CMD,     X"F0", X"08A2"),   -- Send eight bytes from RTC
-    7 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
-    8 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-    9 => (END_CMD,       X"00", X"0000")
+    5 => (END_CMD,       X"00", X"0000")
    );
 
   pure function get_action_list_read(board : string) return action_list_t is
@@ -164,7 +156,7 @@ architecture synthesis of rtc_master is
   pure function post_read(board : string; arg : std_logic_vector) return std_logic_vector is
   begin
     if board = "MEGA65_R3" then
-      return arg;
+      return arg(55 downto 0) & X"00";
     else
       -- Valid for R4 and R5
       return arg(39 downto 32) & arg(63 downto 40) & arg(31 downto 0);
@@ -175,10 +167,10 @@ architecture synthesis of rtc_master is
   pure function pre_write(board : string; arg : std_logic_vector) return std_logic_vector is
   begin
     if board = "MEGA65_R3" then
-      return arg;
+      return X"00" & arg(63 downto 8) & X"00";
     else
       -- Valid for R4 and R5
-      return arg(55 downto 32) & arg(63 downto 56) & arg(31 downto 0);
+      return arg(55 downto 32) & arg(63 downto 56) & arg(31 downto 0) & X"00";
     end if;
   end function pre_write;
 
@@ -193,6 +185,8 @@ architecture synthesis of rtc_master is
   signal action      : action_t;
   signal next_action : std_logic;
   signal rtc         : std_logic_vector(63 downto 0);
+  signal rtc_write   : std_logic_vector(71 downto 0);
+  signal write       : std_logic;
 
 begin
 
@@ -224,12 +218,15 @@ begin
             action      <= C_ACTION_LIST_READ(0);
             next_action <= '0';
             state       <= BUSY_ST;
+            write       <= '0';
           end if;
           if rtc_write_i = '1' then
+            rtc_write   <= pre_write(G_BOARD, rtc_wr_data_i);
             action_idx  <= 0;
             action      <= C_ACTION_LIST_WRITE(0);
             next_action <= '0';
             state       <= BUSY_ST;
+            write       <= '1';
           end if;
 
         when BUSY_ST =>
@@ -273,19 +270,21 @@ begin
                 end if;
 
               when SHIFT_OUT_CMD =>
-                cpu_m_ce_o      <= '1';
-                cpu_m_we_o      <= '1';
-                cpu_m_addr_o    <= action.addr;
-                rtc             <= pre_write(G_BOARD, rtc);
-                cpu_m_wr_data_o <= rtc(15 downto 0);
+                if cpu_m_ce_o = '0' then
+                  cpu_m_ce_o      <= '1';
+                  cpu_m_we_o      <= '1';
+                  cpu_m_addr_o    <= action.addr;
+                  cpu_m_wr_data_o <= rtc_write(7 downto 0) & rtc_write(15 downto 8);
+                end if;
                 if cpu_m_ce_o = '1' and cpu_m_wait_i = '0' then
-                  rtc(63 downto 0) <= X"0000" & rtc(63 downto 16);
+                  rtc_write(71 downto 0) <= X"0000" & rtc_write(71 downto 16);
                   action.data <= action.data - 1;
                   action.addr <= action.addr + 1;
                   cpu_m_addr_o  <= cpu_m_addr_o + 1;
                   if action.data = 1 then
                     next_action <= '1';
                     cpu_m_ce_o  <= '0';
+                    cpu_m_we_o  <= '0';
                   end if;
                 end if;
 
@@ -298,7 +297,7 @@ begin
       end case; -- state
 
       if next_action = '1' then
-        if rtc_write_i = '1' then
+        if write = '1' then
           action <= C_ACTION_LIST_WRITE(action_idx + 1);
         else
           action <= C_ACTION_LIST_READ(action_idx + 1);

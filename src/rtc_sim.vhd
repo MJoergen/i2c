@@ -53,7 +53,7 @@ architecture simulation of rtc_sim is
    pure function get_i2c_address(board : string) return unsigned is
    begin
       if board = "MEGA65_R3" then
-         return b"1010001";
+         return b"1101111";
       else
          return b"1010001";
       end if;
@@ -65,7 +65,7 @@ architecture simulation of rtc_sim is
    pure function board2int(board : string; arg : std_logic_vector) return std_logic_vector is
    begin
      if board = "MEGA65_R3" then
-       return arg;
+       return arg(55 downto 0) & X"00";
      else
        -- Valid for R4 and R5
        return arg(39 downto 32) & arg(63 downto 40) & arg(31 downto 0);
@@ -76,7 +76,7 @@ architecture simulation of rtc_sim is
    pure function int2board(board : string; arg : std_logic_vector) return std_logic_vector is
    begin
      if board = "MEGA65_R3" then
-       return arg;
+       return X"00" & arg(63 downto 8);
      else
        -- Valid for R4 and R5
        return arg(55 downto 32) & arg(63 downto 56) & arg(31 downto 0);

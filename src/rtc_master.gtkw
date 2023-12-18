@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Sun Dec 17 07:27:58 2023
+[*] Mon Dec 18 07:53:49 2023
 [*]
-[dumpfile] "/home/mike/git/MJoergen/i2c/src/rtc_master.ghw"
-[dumpfile_mtime] "Sun Dec 17 07:26:32 2023"
-[dumpfile_size] 640348
-[savefile] "/home/mike/git/MJoergen/i2c/src/rtc_master.gtkw"
-[timestart] 0
+[dumpfile] "/home/mfj/git/PRIVATE/MJoergen/i2c/src/rtc_master.ghw"
+[dumpfile_mtime] "Mon Dec 18 07:53:02 2023"
+[dumpfile_size] 608582
+[savefile] "/home/mfj/git/PRIVATE/MJoergen/i2c/src/rtc_master.gtkw"
+[timestart] 168823700000
 [size] 1835 913
 [pos] 1979 61
-*-34.770432 39410000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-27.260288 169300000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.tb_rtc_master.
 [treeopen] top.tb_rtc_master.rtc_master_inst.action.
@@ -32,7 +32,7 @@ top.tb_rtc_master.rtc_write
 #{top.tb_rtc_master.rtc_rd_data[63:0]} top.tb_rtc_master.rtc_rd_data[63] top.tb_rtc_master.rtc_rd_data[62] top.tb_rtc_master.rtc_rd_data[61] top.tb_rtc_master.rtc_rd_data[60] top.tb_rtc_master.rtc_rd_data[59] top.tb_rtc_master.rtc_rd_data[58] top.tb_rtc_master.rtc_rd_data[57] top.tb_rtc_master.rtc_rd_data[56] top.tb_rtc_master.rtc_rd_data[55] top.tb_rtc_master.rtc_rd_data[54] top.tb_rtc_master.rtc_rd_data[53] top.tb_rtc_master.rtc_rd_data[52] top.tb_rtc_master.rtc_rd_data[51] top.tb_rtc_master.rtc_rd_data[50] top.tb_rtc_master.rtc_rd_data[49] top.tb_rtc_master.rtc_rd_data[48] top.tb_rtc_master.rtc_rd_data[47] top.tb_rtc_master.rtc_rd_data[46] top.tb_rtc_master.rtc_rd_data[45] top.tb_rtc_master.rtc_rd_data[44] top.tb_rtc_master.rtc_rd_data[43] top.tb_rtc_master.rtc_rd_data[42] top.tb_rtc_master.rtc_rd_data[41] top.tb_rtc_master.rtc_rd_data[40] top.tb_rtc_master.rtc_rd_data[39] top.tb_rtc_master.rtc_rd_data[38] top.tb_rtc_master.rtc_rd_data[37] top.tb_rtc_master.rtc_rd_data[36] top.tb_rtc_master.rtc_rd_data[35] top.tb_rtc_master.rtc_rd_data[34] top.tb_rtc_master.rtc_rd_data[33] top.tb_rtc_master.rtc_rd_data[32] top.tb_rtc_master.rtc_rd_data[31] top.tb_rtc_master.rtc_rd_data[30] top.tb_rtc_master.rtc_rd_data[29] top.tb_rtc_master.rtc_rd_data[28] top.tb_rtc_master.rtc_rd_data[27] top.tb_rtc_master.rtc_rd_data[26] top.tb_rtc_master.rtc_rd_data[25] top.tb_rtc_master.rtc_rd_data[24] top.tb_rtc_master.rtc_rd_data[23] top.tb_rtc_master.rtc_rd_data[22] top.tb_rtc_master.rtc_rd_data[21] top.tb_rtc_master.rtc_rd_data[20] top.tb_rtc_master.rtc_rd_data[19] top.tb_rtc_master.rtc_rd_data[18] top.tb_rtc_master.rtc_rd_data[17] top.tb_rtc_master.rtc_rd_data[16] top.tb_rtc_master.rtc_rd_data[15] top.tb_rtc_master.rtc_rd_data[14] top.tb_rtc_master.rtc_rd_data[13] top.tb_rtc_master.rtc_rd_data[12] top.tb_rtc_master.rtc_rd_data[11] top.tb_rtc_master.rtc_rd_data[10] top.tb_rtc_master.rtc_rd_data[9] top.tb_rtc_master.rtc_rd_data[8] top.tb_rtc_master.rtc_rd_data[7] top.tb_rtc_master.rtc_rd_data[6] top.tb_rtc_master.rtc_rd_data[5] top.tb_rtc_master.rtc_rd_data[4] top.tb_rtc_master.rtc_rd_data[3] top.tb_rtc_master.rtc_rd_data[2] top.tb_rtc_master.rtc_rd_data[1] top.tb_rtc_master.rtc_rd_data[0]
 @1401200
 -tb
-@c00200
+@800200
 -rtc_master
 @28
 top.tb_rtc_master.rtc_master_inst.clk_i
@@ -42,6 +42,7 @@ top.tb_rtc_master.rtc_master_inst.rtc_read_i
 top.tb_rtc_master.rtc_master_inst.rtc_write_i
 top.tb_rtc_master.rtc_master_inst.cpu_m_wait_i
 top.tb_rtc_master.rtc_master_inst.cpu_m_ce_o
+@29
 top.tb_rtc_master.rtc_master_inst.cpu_m_we_o
 @22
 #{top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[7:0]} top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[7] top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[6] top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[5] top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[4] top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[3] top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[2] top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[1] top.tb_rtc_master.rtc_master_inst.cpu_m_addr_o[0]
@@ -61,7 +62,7 @@ top.tb_rtc_master.rtc_master_inst.action.cmd
 @22
 #{top.tb_rtc_master.rtc_master_inst.action.addr[7:0]} top.tb_rtc_master.rtc_master_inst.action.addr[7] top.tb_rtc_master.rtc_master_inst.action.addr[6] top.tb_rtc_master.rtc_master_inst.action.addr[5] top.tb_rtc_master.rtc_master_inst.action.addr[4] top.tb_rtc_master.rtc_master_inst.action.addr[3] top.tb_rtc_master.rtc_master_inst.action.addr[2] top.tb_rtc_master.rtc_master_inst.action.addr[1] top.tb_rtc_master.rtc_master_inst.action.addr[0]
 #{top.tb_rtc_master.rtc_master_inst.action.data[15:0]} top.tb_rtc_master.rtc_master_inst.action.data[15] top.tb_rtc_master.rtc_master_inst.action.data[14] top.tb_rtc_master.rtc_master_inst.action.data[13] top.tb_rtc_master.rtc_master_inst.action.data[12] top.tb_rtc_master.rtc_master_inst.action.data[11] top.tb_rtc_master.rtc_master_inst.action.data[10] top.tb_rtc_master.rtc_master_inst.action.data[9] top.tb_rtc_master.rtc_master_inst.action.data[8] top.tb_rtc_master.rtc_master_inst.action.data[7] top.tb_rtc_master.rtc_master_inst.action.data[6] top.tb_rtc_master.rtc_master_inst.action.data[5] top.tb_rtc_master.rtc_master_inst.action.data[4] top.tb_rtc_master.rtc_master_inst.action.data[3] top.tb_rtc_master.rtc_master_inst.action.data[2] top.tb_rtc_master.rtc_master_inst.action.data[1] top.tb_rtc_master.rtc_master_inst.action.data[0]
-@1401200
+@1000200
 -rtc_master
 @c00200
 -cpu_to_i2c_master
@@ -137,7 +138,7 @@ top.tb_rtc_master.rtc_sim_inst.sda
 top.tb_rtc_master.rtc_sim_inst.scl
 @1401200
 -rtc_sim
-@800200
+@c00200
 -i2c_mem_sim
 @28
 top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.clk_i
@@ -166,7 +167,7 @@ top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.state
 #{top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][7:0]} top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][7] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][6] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][5] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][4] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][3] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][2] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][1] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[5][0]
 #{top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][7:0]} top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][7] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][6] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][5] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][4] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][3] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][2] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][1] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[6][0]
 #{top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][7:0]} top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][7] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][6] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][5] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][4] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][3] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][2] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][1] top.tb_rtc_master.rtc_sim_inst.i2c_mem_sim_inst.ram[7][0]
-@1000200
+@1401200
 -i2c_mem_sim
 [pattern_trace] 1
 [pattern_trace] 0

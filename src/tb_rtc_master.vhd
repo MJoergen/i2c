@@ -29,10 +29,20 @@ architecture simulation of tb_rtc_master is
 
   signal rtc_value   : unsigned(63 downto 0);
 
+  pure function get_rtc_mask(board : string) return unsigned is
+  begin
+    if board = "MEGA65_R3" then
+      return X"FF_FF_FF_FF_FF_FF_FF_00";
+    else
+      return X"FF_FF_FF_FF_FF_FF_FF_FF";
+    end if;
+  end function get_rtc_mask;
+
   --                                                     WD YY MM DD HH MM SS ss
   constant C_ZERO_RTC_VALUE : unsigned(63 downto 0) := X"00_00_01_01_00_00_00_00";
   constant C_INIT_RTC_VALUE : unsigned(63 downto 0) := X"06_23_12_17_08_22_45_79";
   constant C_NEW_RTC_VALUE  : unsigned(63 downto 0) := X"06_99_12_31_23_59_59_99";
+  constant C_RTC_MASK       : unsigned(63 downto 0) := get_rtc_mask(G_BOARD);
 
 begin
 
@@ -76,8 +86,10 @@ begin
     rtc_write <= '0';
     wait until rst = '0';
     wait until rising_edge(clk);
-    assert rtc_value = C_INIT_RTC_VALUE;
-    rtc_verify_data("START", std_logic_vector(C_ZERO_RTC_VALUE));
+    assert rtc_value = (C_INIT_RTC_VALUE and C_RTC_MASK)
+      report "Initial RTC value not correct. Got " & to_hstring(rtc_value) &
+        ", expected " & to_hstring(C_INIT_RTC_VALUE and C_RTC_MASK);
+    rtc_verify_data("START", std_logic_vector(C_ZERO_RTC_VALUE and C_RTC_MASK));
 
     -- Verify transaction is started right after reset
     wait until rising_edge(clk);
@@ -88,11 +100,13 @@ begin
     -- Verify correct value after reset
     wait until rtc_busy = '0';
     wait until rising_edge(clk);
-    rtc_verify_data("READ1", std_logic_vector(C_INIT_RTC_VALUE));
+    rtc_verify_data("READ1", std_logic_vector(C_INIT_RTC_VALUE and C_RTC_MASK));
 
     -- Verify new value can be set
     rtc_write_data(std_logic_vector(C_NEW_RTC_VALUE));
-    assert rtc_value = C_NEW_RTC_VALUE;
+    assert rtc_value = (C_NEW_RTC_VALUE and C_RTC_MASK)
+      report "New RTC value not correctly written. Got " & to_hstring(rtc_value) &
+        ", expected " & to_hstring(C_NEW_RTC_VALUE and C_RTC_MASK);
 
     rtc_read <= '1';
     wait until rising_edge(clk);
@@ -103,8 +117,8 @@ begin
     wait until rtc_busy = '0';
     wait until rising_edge(clk);
 
-    rtc_verify_data("READ2", std_logic_vector(C_NEW_RTC_VALUE));
-    assert rtc_value = C_NEW_RTC_VALUE;
+    rtc_verify_data("READ2", std_logic_vector(C_NEW_RTC_VALUE and C_RTC_MASK));
+    assert rtc_value = (C_NEW_RTC_VALUE and C_RTC_MASK);
 
     report "Test completed";
     running <= '0';
