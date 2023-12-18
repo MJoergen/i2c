@@ -29,12 +29,21 @@ architecture simulation of tb_rtc_controller is
    signal cpu_i2c_rd_data   : std_logic_vector(15 downto 0);
    signal rtc_sim_value     : unsigned(63 downto 0);
 
+   pure function get_rtc_mask(board : string) return std_logic_vector is
+   begin
+      if board = "MEGA65_R3" then
+         return X"FF_FF_FF_FF_FF_FF_FF_00";
+      else
+         return X"FF_FF_FF_FF_FF_FF_FF_FF";
+      end if;
+   end function get_rtc_mask;
+
    --                                                              WD YY MM DD HH MM SS ss
    constant C_RESET_RTC_VALUE : std_logic_vector(63 downto 0) := X"00_00_01_01_00_00_00_00";
-   constant C_INIT_RTC_VALUE  : std_logic_vector(63 downto 0) := X"06_23_12_17_08_22_45_79";
-   constant C_NEXT_RTC_VALUE  : std_logic_vector(63 downto 0) := X"06_23_12_17_08_22_45_80";
-   constant C_NEW_RTC_VALUE   : std_logic_vector(63 downto 0) := X"04_24_03_20_11_43_51_77";
-   constant C_NEW2_RTC_VALUE  : std_logic_vector(63 downto 0) := X"04_24_03_20_11_43_51_78";
+   constant C_INIT_RTC_VALUE  : std_logic_vector(63 downto 0) := X"06_23_12_17_08_22_45_72" and get_rtc_mask(G_BOARD);
+   constant C_NEXT_RTC_VALUE  : std_logic_vector(63 downto 0) := std_logic_vector(unsigned(C_INIT_RTC_VALUE) + X"0000000000000001");
+   constant C_NEW_RTC_VALUE   : std_logic_vector(63 downto 0) := X"04_24_03_20_11_43_51_77" and get_rtc_mask(G_BOARD);
+   constant C_NEW2_RTC_VALUE  : std_logic_vector(63 downto 0) := std_logic_vector(unsigned(C_NEW_RTC_VALUE) + X"0000000000000001");
 
 begin
 

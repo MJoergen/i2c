@@ -121,11 +121,13 @@ begin
        G_I2C_ADDRESS => C_I2C_ADDRESS
      )
      port map (
-        clk_i   => clk_i,
-        rst_i   => rst_i,
-        mem07_o => rtc,
-        sda_io  => sda,
-        scl_io  => scl
+        clk_i        => clk_i,
+        rst_i        => rst_i,
+        mem07_o      => rtc,
+        mem07_i      => (others => '0'),
+        mem07_load_i => '0',
+        sda_io       => sda,
+        scl_io       => scl
      ); -- i2c_mem_sim_inst
 
   rtc_o <= unsigned(board2int(G_BOARD, std_logic_vector(rtc)));

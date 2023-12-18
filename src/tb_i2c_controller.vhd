@@ -70,10 +70,13 @@ begin
        G_I2C_ADDRESS => unsigned(C_I2C_ADDRESS(6 downto 0))
      )
      port map (
-        clk_i  => clk,
-        rst_i  => rst,
-        sda_io => sda,
-        scl_io => scl
+        clk_i        => clk,
+        rst_i        => rst,
+        mem07_o      => open,
+        mem07_i      => (others => '0'),
+        mem07_load_i => '0',
+        sda_io       => sda,
+        scl_io       => scl
      ); -- i_i2c_mem_sim
 
   ------------------------------------
