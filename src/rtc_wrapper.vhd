@@ -69,12 +69,12 @@ begin
       cpu_s_wr_data_i => rtc_wr_data_i,
       cpu_s_rd_data_o => rtc_rd_data_o,
       rtc_o           => rtc_o,
-      cpu_m_wait_i    => i2c_wait_o,
+      cpu_m_wait_i    => rtc_i2c_wait,
       cpu_m_ce_o      => rtc_i2c_ce,
       cpu_m_we_o      => rtc_i2c_we,
       cpu_m_addr_o    => rtc_i2c_addr,
       cpu_m_wr_data_o => rtc_i2c_wr_data,
-      cpu_m_rd_data_i => i2c_rd_data_o
+      cpu_m_rd_data_i => rtc_i2c_rd_data
     ); -- rtc_controller_inst
 
    qnice_arbit_inst : entity work.qnice_arbit

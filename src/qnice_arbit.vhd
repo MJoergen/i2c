@@ -59,7 +59,7 @@ begin
    m_addr_o    <= cond_select(s1_ce_i, s1_addr_i,    s0_addr_i);
    m_wr_data_o <= cond_select(s1_ce_i, s1_wr_data_i, s0_wr_data_i);
 
-   s0_wait_o    <= m_wait_i;
+   s0_wait_o    <= m_wait_i or s1_ce_i;
    s1_wait_o    <= m_wait_i;
    s0_rd_data_o <= m_rd_data_i;
    s1_rd_data_o <= m_rd_data_i;

@@ -11,13 +11,15 @@ entity i2c_mem_sim is
    );
    port (
       -- TB signals
-      clk_i   : in    std_logic;
-      rst_i   : in    std_logic;
-      mem07_o : out   unsigned(63 downto 0);
+      clk_i        : in    std_logic;
+      rst_i        : in    std_logic;
+      mem07_o      : out   unsigned(63 downto 0);
+      mem07_i      : in    unsigned(63 downto 0);
+      mem07_load_i : in    std_logic;
 
       -- I2C signals
-      sda_io  : inout std_logic;
-      scl_io  : inout std_logic
+      sda_io       : inout std_logic;
+      scl_io       : inout std_logic
    );
 end entity i2c_mem_sim;
 
@@ -146,6 +148,17 @@ begin
            when others =>
               null;
         end case;
+
+        if mem07_load_i = '1' then
+           ram(0) <= mem07_i( 7 downto  0);
+           ram(1) <= mem07_i(15 downto  8);
+           ram(2) <= mem07_i(23 downto 16);
+           ram(3) <= mem07_i(31 downto 24);
+           ram(4) <= mem07_i(39 downto 32);
+           ram(5) <= mem07_i(47 downto 40);
+           ram(6) <= mem07_i(55 downto 48);
+           ram(7) <= mem07_i(63 downto 56);
+        end if;
 
         if rst_i = '1' then
            state <= IDLE_ST;

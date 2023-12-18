@@ -37,6 +37,9 @@ architecture simulation of tb_rtc_wrapper is
   signal scl         : std_logic;
   signal sda         : std_logic;
 
+  signal mem07       : unsigned(63 downto 0);
+  signal mem07_load  : std_logic;
+
    pure function get_i2c_address(board : string) return unsigned is
    begin
       if board = "MEGA65_R3" then
@@ -70,7 +73,9 @@ architecture simulation of tb_rtc_wrapper is
      end if;
    end function int2board;
 
-   constant C_INIT : std_logic_vector(63 downto 0) := X"8877665544332211";
+   constant C_RTC_RESET : std_logic_vector(63 downto 0) := X"0000010100000000";
+   constant C_RTC_INIT  : std_logic_vector(63 downto 0) := X"1122334455667788";
+   constant C_RTC_NEW   : std_logic_vector(63 downto 0) := X"8877665544332211";
 
 begin
 
@@ -83,8 +88,6 @@ begin
   ----------------------------------------------
 
   test_proc : process
-    constant C_RTC_EXP : std_logic_vector(64 downto 0) := "1" & X"4077665544332211";
-
     procedure rtc_write (
       addr : in std_logic_vector(7 downto 0);
       data : in std_logic_vector(15 downto 0)) is
@@ -174,8 +177,16 @@ begin
 
     wait until rst = '0';
     wait until rising_edge(clk);
-    assert rtc = "0" & X"4000000101000000"
-      report "Incorrect rtc start";
+    assert rtc = "0" & X"40" & C_RTC_RESET(63 downto 8)
+      report "Incorrect rtc reset. Got: " & to_hstring(rtc) &
+             ", Expected:" & to_hstring("0" & X"40" & C_RTC_RESET(63 downto 8));
+
+    wait for 200 us;  -- Wait until initial RTC read is done
+    wait until rising_edge(clk);
+
+    assert rtc = "1" & X"40" & C_RTC_INIT(63 downto 8)
+      report "Incorrect rtc init. Got: " & to_hstring(rtc) &
+             ", Expected:" & to_hstring("1" & X"40" & C_RTC_INIT(63 downto 8));
 
     -- Verify access to I2C
     i2c_write (X"00", X"1234");
@@ -186,23 +197,28 @@ begin
     wait until rising_edge(clk);
     wait until rising_edge(clk);
 
+    mem07      <= unsigned(int2board(G_BOARD, C_RTC_NEW));
+    mem07_load <= '1';
+    wait until rising_edge(clk);
+    mem07_load <= '0';
+    wait until rising_edge(clk);
+
     -- Verify access to RTC
-    rtc_verify(X"09", X"0000");
+    rtc_write(X"08", X"0000");
+    rtc_write(X"09", X"0002");
     wait until rising_edge(clk);
-    rtc_write (X"09", X"00FF");
-    wait until rising_edge(clk);
-    wait for 5 us;
-    wait until rising_edge(clk);
+    rtc_verify(X"08", X"0000");
     rtc_verify(X"09", X"0001");
-    wait for 160 us;
+    wait for 200 us;
     wait until rising_edge(clk);
+    rtc_verify(X"08", X"0000");
     rtc_verify(X"09", X"0000");
     wait until rising_edge(clk);
     wait until rising_edge(clk);
 
-    assert rtc = C_RTC_EXP
-      report "Incorrect rtc end. Got: " & to_hstring(rtc) &
-             ", Expected:" & to_hstring(C_RTC_EXP);
+    assert rtc = "0" & X"40" & C_RTC_NEW(63 downto 8)
+      report "Incorrect rtc new. Got: " & to_hstring(rtc) &
+             ", Expected:" & to_hstring("0" & X"40" & C_RTC_NEW(63 downto 8));
 
     wait until rising_edge(clk);
     report "Test completed";
@@ -260,15 +276,18 @@ begin
 
   i2c_mem_sim_inst : entity work.i2c_mem_sim
      generic map (
-       G_INIT        => int2board(G_BOARD, C_INIT),
+       G_INIT        => int2board(G_BOARD, C_RTC_INIT),
        G_CLOCK_FREQ  => 50e6,
        G_I2C_ADDRESS => C_I2C_ADDRESS
      )
      port map (
-        clk_i  => clk,
-        rst_i  => rst,
-        sda_io => sda,
-        scl_io => scl
+        clk_i        => clk,
+        rst_i        => rst,
+        mem07_o      => open,
+        mem07_i      => mem07,
+        mem07_load_i => mem07_load,
+        sda_io       => sda,
+        scl_io       => scl
      ); -- i2c_mem_sim_inst
 
 end architecture simulation;
