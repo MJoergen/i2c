@@ -196,6 +196,12 @@ begin
          if rtc_external(64) /= rtc_internal(64) or rst_i = '1' then
             rtc_internal <= rtc_external;
          end if;
+
+         if rst_i = '1' then
+            rtc_read  <= '0';
+            rtc_write <= '0';
+            running   <= '1';
+         end if;
       end if;
    end process rtc_proc;
 
