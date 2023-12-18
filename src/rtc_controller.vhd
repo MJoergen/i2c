@@ -108,7 +108,7 @@ begin
 
    cpu_s_wait_o <= '0';
 
-   rtc_o <= rtc_internal;
+   rtc_o <= rtc_internal(64) & X"40" & rtc_internal(63 downto 8);
 
    -- Instantiate the RTC master
    rtc_master_inst : entity work.rtc_master
@@ -183,14 +183,14 @@ begin
          end if;
 
          if cpu_s_ce_i = '1' and cpu_s_we_i = '1' then
-            if cpu_s_addr_i < X"08" and running = '1' then
+            if cpu_s_addr_i < X"08" and running = '0' then
                idx := to_integer(cpu_s_addr_i(2 downto 0));
                rtc_internal(8*idx+7 downto 8*idx) <= cpu_s_wr_data_i(7 downto 0);
             end if;
-            if cpu_s_addr_i = X"08" then
+            if cpu_s_addr_i = X"08" and rtc_busy = '0' then
                running <= cpu_s_wr_data_i(0);
             end if;
-            if cpu_s_addr_i = X"09" and running = '1' then
+            if cpu_s_addr_i = X"09" and running = '0' then
                rtc_reading <= cpu_s_wr_data_i(1);
                rtc_read    <= cpu_s_wr_data_i(1);
                rtc_write   <= cpu_s_wr_data_i(2);
@@ -202,8 +202,7 @@ begin
          if rtc_busy_d = '1' and rtc_busy = '0' then
             if rtc_reading = '1' then
                rtc_reading  <= '0';
-               rtc_internal(55 downto  0) <= rtc_external(63 downto 8);
-               rtc_internal(63 downto 56) <= X"40";
+               rtc_internal(63 downto 0) <= rtc_external;
                rtc_internal(64) <= not rtc_internal(64);
             end if;
          end if;
@@ -213,7 +212,7 @@ begin
             rtc_read     <= '0';
             rtc_write    <= '0';
             running      <= '1';
-            rtc_internal <= "0" & X"40_00_00_01_01_00_00_00";
+            rtc_internal <= "0" & X"00_00_01_01_00_00_00_00";
          end if;
       end if;
    end process rtc_proc;
