@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Mon Dec 18 13:19:19 2023
+[*] Tue Dec 19 07:42:10 2023
 [*]
 [dumpfile] "/home/mfj/git/PRIVATE/MJoergen/i2c/src/rtc_controller.ghw"
-[dumpfile_mtime] "Mon Dec 18 13:19:01 2023"
-[dumpfile_size] 4913326
+[dumpfile_mtime] "Tue Dec 19 07:42:02 2023"
+[dumpfile_size] 6550196
 [savefile] "/home/mfj/git/PRIVATE/MJoergen/i2c/src/rtc_controller.gtkw"
 [timestart] 0
 [size] 1545 900
 [pos] -1 -1
-*-39.474613 188400000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-39.889385 188400000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.tb_rtc_controller.
 [treeopen] top.tb_rtc_controller.rtc_controller_inst.

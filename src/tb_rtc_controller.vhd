@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 entity tb_rtc_controller is
    generic (
+      G_DEBUG : boolean := false;
       G_BOARD : string
    );
 end entity tb_rtc_controller;
@@ -106,12 +107,16 @@ begin
       wait until rst = '0';
       wait until rising_edge(clk);
 
-      -- Simulation model already has the initial time
+      if G_DEBUG then
+         report "Test initial read";
+      end if;
+
+      -- Verify simulation model already has the initial time
       assert rtc_sim_value = unsigned(C_INIT_RTC_VALUE)
          report "Incorrect rtc_sim_value start. Got: " & to_hstring(rtc_sim_value) &
          ", expected: " & to_hstring(C_INIT_RTC_VALUE);
 
-      -- Timer value reported to core is not yet initialized
+      -- Verify timer value reported to core is not yet initialized
       assert rtc = "0" & X"40" & C_RESET_RTC_VALUE(63 downto 8)
          report "Incorrect rtc start. Got: " & to_hstring(rtc) &
          ", expected: " & to_hstring("0" & X"40" & C_RESET_RTC_VALUE(63 downto 8));
@@ -125,8 +130,7 @@ begin
       cpu_verify(X"05", X"0001"); -- Month
       cpu_verify(X"06", X"0000"); -- Year since 2000
       cpu_verify(X"07", X"0000"); -- DayOfWeek
-      cpu_verify(X"08", X"0001"); -- Internal clock is running
-      cpu_verify(X"09", X"0001"); -- I2C is busy (read in progress)
+      cpu_verify(X"08", X"0009"); -- Internal clock is running, I2C is busy (read in progress)
 
       -- Wait for initial read to complete
       wait for 200 us;
@@ -151,8 +155,11 @@ begin
       cpu_verify(X"05", X"00" & C_INIT_RTC_VALUE(47 downto 40)); -- Month
       cpu_verify(X"06", X"00" & C_INIT_RTC_VALUE(55 downto 48)); -- Year since 2000
       cpu_verify(X"07", X"00" & C_INIT_RTC_VALUE(63 downto 56)); -- DayOfWeek
-      cpu_verify(X"08", X"0001");                                -- Internal clock is running
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
+
+      if G_DEBUG then
+         report "Test read-only when timer is running";
+      end if;
 
       -- Verify write not possible when timer is running
       cpu_write( X"00", X"FFFF");
@@ -171,8 +178,7 @@ begin
       cpu_verify(X"05", X"00" & C_INIT_RTC_VALUE(47 downto 40)); -- Month
       cpu_verify(X"06", X"00" & C_INIT_RTC_VALUE(55 downto 48)); -- Year since 2000
       cpu_verify(X"07", X"00" & C_INIT_RTC_VALUE(63 downto 56)); -- DayOfWeek
-      cpu_verify(X"08", X"0001");                                -- Internal clock is running
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
 
       -- Verify timer value reported to core is unchanged
       assert rtc = "1" & X"40" & C_INIT_RTC_VALUE(63 downto 8)
@@ -180,14 +186,12 @@ begin
          ", expected: " & to_hstring("0" & X"40" & C_INIT_RTC_VALUE(63 downto 8));
 
       -- Verify read from RTC not possible when timer is running
-      cpu_write( X"09", X"0002");                                -- Initiate read from RTC
-      cpu_verify(X"08", X"0001");                                -- Internal clock is running
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_write( X"08", X"0002");                                -- Initiate read from RTC
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
 
       -- Verify write to RTC not possible when timer is running
-      cpu_write( X"09", X"0004");                                -- Initiate write to RTC
-      cpu_verify(X"08", X"0001");                                -- Internal clock is running
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_write( X"08", X"0004");                                -- Initiate write to RTC
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
 
       -- Verify timer is running
       wait for 1 ms;
@@ -200,13 +204,15 @@ begin
       cpu_verify(X"05", X"00" & C_NEXT_RTC_VALUE(47 downto 40)); -- Month
       cpu_verify(X"06", X"00" & C_NEXT_RTC_VALUE(55 downto 48)); -- Year since 2000
       cpu_verify(X"07", X"00" & C_NEXT_RTC_VALUE(63 downto 56)); -- DayOfWeek
-      cpu_verify(X"08", X"0001");                                -- Internal clock is running
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
+
+      if G_DEBUG then
+         report "Test writeable when timer is stopped";
+      end if;
 
       -- Verify timer can be stopped
       cpu_write( X"08", X"0000");                                -- Stop internal timer
-      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped, I2C is idle
 
       -- Verify timer is stopped
       wait for 1 ms;
@@ -219,8 +225,7 @@ begin
       cpu_verify(X"05", X"00" & C_NEXT_RTC_VALUE(47 downto 40)); -- Month
       cpu_verify(X"06", X"00" & C_NEXT_RTC_VALUE(55 downto 48)); -- Year since 2000
       cpu_verify(X"07", X"00" & C_NEXT_RTC_VALUE(63 downto 56)); -- DayOfWeek
-      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped, I2C is idle
 
       -- Verify write to local timer
       cpu_write( X"00", X"00" & C_NEW_RTC_VALUE( 7 downto  0));  -- 100ths
@@ -245,26 +250,32 @@ begin
          report "Incorrect rtc 1. Got: " & to_hstring(rtc) &
          ", expected: " & to_hstring("0" & X"40" & C_NEW_RTC_VALUE(63 downto 8));
 
+      if G_DEBUG then
+         report "Test write to RTC";
+      end if;
+
       -- Verify write to RTC is possible
-      cpu_write( X"09", X"0004");                                -- Initiate write to RTC
-      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped
-      cpu_verify(X"09", X"0001");                                -- I2C is busy
+      cpu_write( X"08", X"0004");                                -- Initiate write to RTC
+      cpu_verify(X"08", X"0001");                                -- Internal clock is stopped, I2C is busy
 
       -- Verify timer cannot be started when busy
-      cpu_write( X"08", X"0001");                                -- Try to start internal clock
-      cpu_verify(X"08", X"0000");                                -- Internal clock is still stopped
+      cpu_write( X"08", X"0008");                                -- Try to start internal clock
+      cpu_verify(X"08", X"0001");                                -- Internal clock is still stopped
 
       wait for 200 us;
       wait until rising_edge(clk);
 
       -- Verify transaction done
-      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped, I2C is idle
 
       -- Verify simulation model is updated
       assert rtc_sim_value = unsigned(C_NEW_RTC_VALUE)
          report "Incorrect rtc_sim_value start. Got: " & to_hstring(rtc_sim_value) &
          ", expected: " & to_hstring(C_NEW_RTC_VALUE);
+
+      if G_DEBUG then
+         report "Test read from RTC";
+      end if;
 
       -- Clear local timer
       cpu_write( X"00", X"0001");  -- 100ths
@@ -285,20 +296,18 @@ begin
       cpu_verify(X"07", X"0001");  -- DayOfWeek
 
       -- Verify read from RTC is possible
-      cpu_write( X"09", X"0002");                                -- Initiate read from RTC
-      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped
-      cpu_verify(X"09", X"0001");                                -- I2C is busy
+      cpu_write( X"08", X"0002");                                -- Initiate read from RTC
+      cpu_verify(X"08", X"0001");                                -- Internal clock is stopped, I2C is busy
 
       -- Verify timer cannot be started when busy
-      cpu_write( X"08", X"0001");                                -- Try to start internal clock
-      cpu_verify(X"08", X"0000");                                -- Internal clock is still stopped
+      cpu_write( X"08", X"0008");                                -- Try to start internal clock
+      cpu_verify(X"08", X"0001");                                -- Internal clock is still stopped
 
       wait for 200 us;
       wait until rising_edge(clk);
 
       -- Verify transaction done
-      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped, I2C is idle
 
       -- Verify local timer updated
       cpu_verify(X"00", X"00" & C_NEW_RTC_VALUE( 7 downto  0));  -- 100ths
@@ -311,9 +320,8 @@ begin
       cpu_verify(X"07", X"00" & C_NEW_RTC_VALUE(63 downto 56));  -- DayOfWeek
 
       -- Verify timer can be started
-      cpu_write( X"08", X"0001");                                -- Start internal timer
-      cpu_verify(X"08", X"0001");                                -- Internal clock is running
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_write( X"08", X"0008");                                -- Start internal timer
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
 
       -- Verify timer is running
       wait for 1 ms;
@@ -326,8 +334,66 @@ begin
       cpu_verify(X"05", X"00" & C_NEW2_RTC_VALUE(47 downto 40)); -- Month
       cpu_verify(X"06", X"00" & C_NEW2_RTC_VALUE(55 downto 48)); -- Year since 2000
       cpu_verify(X"07", X"00" & C_NEW2_RTC_VALUE(63 downto 56)); -- DayOfWeek
-      cpu_verify(X"08", X"0001");                                -- Internal clock is running
-      cpu_verify(X"09", X"0000");                                -- I2C is idle
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
+
+      if G_DEBUG then
+         report "Test read from RTC with autostart";
+      end if;
+
+      -- Verify timer can be stopped
+      cpu_write( X"08", X"0000");                                -- Stop internal timer
+      cpu_verify(X"08", X"0000");                                -- Internal clock is stopped, I2C is idle
+
+      -- Clear local timer
+      cpu_write( X"00", X"0001");  -- 100ths
+      cpu_write( X"01", X"0001");  -- Seconds
+      cpu_write( X"02", X"0001");  -- Minutes
+      cpu_write( X"03", X"0001");  -- Hours
+      cpu_write( X"04", X"0001");  -- DayOfMongth
+      cpu_write( X"05", X"0001");  -- Month
+      cpu_write( X"06", X"0001");  -- Year since 2000
+      cpu_write( X"07", X"0001");  -- DayOfWeek
+      cpu_verify(X"00", X"0001");  -- 100ths
+      cpu_verify(X"01", X"0001");  -- Seconds
+      cpu_verify(X"02", X"0001");  -- Minutes
+      cpu_verify(X"03", X"0001");  -- Hours
+      cpu_verify(X"04", X"0001");  -- DayOfMongth
+      cpu_verify(X"05", X"0001");  -- Month
+      cpu_verify(X"06", X"0001");  -- Year since 2000
+      cpu_verify(X"07", X"0001");  -- DayOfWeek
+
+      -- Verify read from RTC with autostart is possible
+      cpu_write( X"08", X"000A");                                -- Initiate read from RTC, with auto-start
+      cpu_verify(X"08", X"0009");                                -- Internal clock is running, I2C is busy
+
+      wait for 200 us;
+      wait until rising_edge(clk);
+
+      -- Verify transaction done
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
+
+      -- Verify local timer updated
+      cpu_verify(X"00", X"00" & C_NEW_RTC_VALUE( 7 downto  0));  -- 100ths
+      cpu_verify(X"01", X"00" & C_NEW_RTC_VALUE(15 downto  8));  -- Seconds
+      cpu_verify(X"02", X"00" & C_NEW_RTC_VALUE(23 downto 16));  -- Minutes
+      cpu_verify(X"03", X"00" & C_NEW_RTC_VALUE(31 downto 24));  -- Hours
+      cpu_verify(X"04", X"00" & C_NEW_RTC_VALUE(39 downto 32));  -- DayOfMongth
+      cpu_verify(X"05", X"00" & C_NEW_RTC_VALUE(47 downto 40));  -- Month
+      cpu_verify(X"06", X"00" & C_NEW_RTC_VALUE(55 downto 48));  -- Year since 2000
+      cpu_verify(X"07", X"00" & C_NEW_RTC_VALUE(63 downto 56));  -- DayOfWeek
+
+      -- Verify timer is running
+      wait for 1 ms;
+      wait until rising_edge(clk);
+      cpu_verify(X"00", X"00" & C_NEW2_RTC_VALUE( 7 downto  0)); -- 100ths
+      cpu_verify(X"01", X"00" & C_NEW2_RTC_VALUE(15 downto  8)); -- Seconds
+      cpu_verify(X"02", X"00" & C_NEW2_RTC_VALUE(23 downto 16)); -- Minutes
+      cpu_verify(X"03", X"00" & C_NEW2_RTC_VALUE(31 downto 24)); -- Hours
+      cpu_verify(X"04", X"00" & C_NEW2_RTC_VALUE(39 downto 32)); -- DayOfMongth
+      cpu_verify(X"05", X"00" & C_NEW2_RTC_VALUE(47 downto 40)); -- Month
+      cpu_verify(X"06", X"00" & C_NEW2_RTC_VALUE(55 downto 48)); -- Year since 2000
+      cpu_verify(X"07", X"00" & C_NEW2_RTC_VALUE(63 downto 56)); -- DayOfWeek
+      cpu_verify(X"08", X"0008");                                -- Internal clock is running, I2C is idle
 
       wait until rising_edge(clk);
       report "Test completed";

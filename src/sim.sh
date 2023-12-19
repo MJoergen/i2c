@@ -28,8 +28,8 @@ tb_rtc_wrapper.vhd"
 #ghdl compile --std=08 $SRC -r tb_rtc_master -gG_BOARD=MEGA65_R5 --stop-time=1000us --wave=rtc_master.ghw
 #gtkwave rtc_master.ghw rtc_master.gtkw
 
-ghdl compile --std=08 $SRC -r tb_rtc_controller -gG_BOARD=MEGA65_R5 --stop-time=4000us --wave=rtc_controller.ghw
-#gtkwave rtc_controller.ghw rtc_controller.gtkw
+ghdl compile --std=08 $SRC -r tb_rtc_controller -gG_BOARD=MEGA65_R3 --stop-time=5000us --wave=rtc_controller.ghw
+gtkwave rtc_controller.ghw rtc_controller.gtkw
 
 #ghdl compile --std=08 $SRC -r tb_rtc_wrapper -gG_BOARD=MEGA65_R3 --stop-time=1000us --wave=rtc_wrapper.ghw
 #gtkwave rtc_wrapper.ghw rtc_wrapper.gtkw
