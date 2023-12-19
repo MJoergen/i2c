@@ -3,14 +3,18 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity tb_i2c_controller is
+  generic (
+    G_DEBUG : boolean := false
+  );
 end entity tb_i2c_controller;
 
 architecture sim of tb_i2c_controller is
 
-  constant REG_I2C_DATA     : std_logic_vector(7 downto 0) := X"00";
-  constant REG_I2C_CONFIG   : std_logic_vector(7 downto 0) := X"F0";
-  constant REG_I2C_STATUS   : std_logic_vector(7 downto 0) := X"F1";
-  constant C_I2C_ADDRESS    : std_logic_vector(7 downto 0) := X"51";
+  constant REG_I2C_DATA     : std_logic_vector(27 downto 0) := X"0000000";
+  constant REG_I2C_CONFIG   : std_logic_vector(27 downto 0) := X"00000F0";
+  constant REG_I2C_STATUS   : std_logic_vector(27 downto 0) := X"00000F1";
+  constant REG_I2C_MMAP     : std_logic_vector(27 downto 0) := X"0000100";
+  constant C_I2C_ADDRESS    : std_logic_vector( 7 downto 0) := X"51";
 
   signal clk                : std_logic := '1';
   signal rst                : std_logic := '1';
@@ -19,7 +23,7 @@ architecture sim of tb_i2c_controller is
   signal cpu_wait           : std_logic;
   signal cpu_ce             : std_logic;
   signal cpu_we             : std_logic;
-  signal cpu_addr           : std_logic_vector( 7 downto 0);
+  signal cpu_addr           : std_logic_vector(27 downto 0);
   signal cpu_wr_data        : std_logic_vector(15 downto 0);
   signal cpu_rd_data        : std_logic_vector(15 downto 0);
   signal scl_in             : std_logic_vector( 7 downto 0) := (others => 'H');
@@ -85,7 +89,7 @@ begin
 
   master_proc : process
     procedure cpu_write (
-      addr : in std_logic_vector(7 downto 0);
+      addr : in std_logic_vector(27 downto 0);
       data : in std_logic_vector(15 downto 0)) is
     begin
       cpu_ce      <= '1';
@@ -103,7 +107,7 @@ begin
     end procedure cpu_write;
 
     procedure cpu_verify (
-      addr : in std_logic_vector(7 downto 0);
+      addr : in std_logic_vector(27 downto 0);
       data : in std_logic_vector(15 downto 0)) is
     begin
       cpu_ce      <= '1';
@@ -195,34 +199,61 @@ begin
     wait for 3 us;
     wait until rising_edge(clk);
 
-    -- Verify the I2C buffer RAM
-    cpu_write( X"00", X"2233");
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
-    cpu_write( X"01", X"4455");
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
-    cpu_write( X"02", X"6677");
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
-    cpu_write( X"03", X"8899");
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
-    cpu_verify(X"00", X"2233");
-    cpu_verify(X"01", X"4455");
-    cpu_verify(X"02", X"6677");
-    cpu_verify(X"03", X"8899");
+    if G_DEBUG then
+      report "Verify the I2C buffer RAM";
+    end if;
 
-    -- Verify communication with the I2C device
+    cpu_write( X"0000000", X"2233");
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    cpu_write( X"0000001", X"4455");
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    cpu_write( X"0000002", X"6677");
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    cpu_write( X"0000003", X"8899");
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    cpu_verify(X"0000000", X"2233");
+    cpu_verify(X"0000001", X"4455");
+    cpu_verify(X"0000002", X"6677");
+    cpu_verify(X"0000003", X"8899");
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+
+    if G_DEBUG then
+      report "Verify batch communication with the I2C device";
+    end if;
+
     i2c_write(  C_I2C_ADDRESS, X"12", X"34");   -- MEM[0x12] := 0x34
     i2c_write(  C_I2C_ADDRESS, X"13", X"78");   -- MEM[0x13] := 0x78
     i2c_verify( C_I2C_ADDRESS, X"12", X"34");   -- MEM[0x12] == 0x34
     i2c_verify( C_I2C_ADDRESS, X"13", X"78");   -- MEM[0x13] == 0x78
     i2c_write(  C_I2C_ADDRESS, X"13", X"9A");   -- MEM[0x13] := 0x9A
     i2c_verify2(C_I2C_ADDRESS, X"12", X"349A"); -- MEM[0x12-0x13] == 0x349A
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
 
-    wait for 3 us;
+    if G_DEBUG then
+      report "Verify memory-mapped communication with the I2C device";
+    end if;
+
+    cpu_write( X"00" & C_I2C_ADDRESS & X"112", X"0065");
+    wait for 30 us;
+    wait until rising_edge(clk);
+    cpu_write( X"00" & C_I2C_ADDRESS & X"113", X"0021");
+    wait for 30 us;
+    wait until rising_edge(clk);
+    cpu_verify(X"00" & C_I2C_ADDRESS & X"112", X"0065");
+    wait for 30 us;
+    wait until rising_edge(clk);
+    cpu_verify(X"00" & C_I2C_ADDRESS & X"113", X"0021");
+
+    wait for 30 us;
     running <= '0';
     report "Test completed";
     wait;

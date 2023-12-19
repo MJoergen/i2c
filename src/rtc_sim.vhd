@@ -91,7 +91,7 @@ begin
       cpu_wait_o    => cpu_wait_o,
       cpu_ce_i      => cpu_ce_i,
       cpu_we_i      => cpu_we_i,
-      cpu_addr_i    => cpu_addr_i,
+      cpu_addr_i    => X"00000" & cpu_addr_i,
       cpu_wr_data_i => cpu_wr_data_i,
       cpu_rd_data_o => cpu_rd_data_o,
       scl_in_i      => scl_in,

@@ -26,7 +26,7 @@ architecture simulation of tb_rtc_wrapper is
   signal i2c_wait    : std_logic;
   signal i2c_ce      : std_logic;
   signal i2c_we      : std_logic;
-  signal i2c_addr    : std_logic_vector( 7 downto 0);
+  signal i2c_addr    : std_logic_vector(27 downto 0);
   signal i2c_wr_data : std_logic_vector(15 downto 0);
   signal i2c_rd_data : std_logic_vector(15 downto 0);
 
@@ -127,7 +127,7 @@ begin
     end procedure rtc_verify;
 
     procedure i2c_write (
-      addr : in std_logic_vector(7 downto 0);
+      addr : in std_logic_vector(27 downto 0);
       data : in std_logic_vector(15 downto 0)) is
     begin
       i2c_ce      <= '1';
@@ -145,7 +145,7 @@ begin
     end procedure i2c_write;
 
     procedure i2c_verify (
-      addr : in std_logic_vector(7 downto 0);
+      addr : in std_logic_vector(27 downto 0);
       data : in std_logic_vector(15 downto 0)) is
     begin
       i2c_ce      <= '1';
@@ -168,7 +168,7 @@ begin
     -- Set reset values
     i2c_ce      <= '0';
     i2c_we      <= '0';
-    i2c_addr    <= X"00";
+    i2c_addr    <= X"0000000";
     i2c_wr_data <= X"0000";
     rtc_ce      <= '0';
     rtc_we      <= '0';
@@ -188,10 +188,10 @@ begin
       report "Incorrect rtc init. Got: " & to_hstring(rtc) &
              ", Expected:" & to_hstring("1" & X"40" & C_RTC_INIT(63 downto 8));
 
-    -- Verify access to I2C
-    i2c_write (X"00", X"1234");
+    -- Verify access to I2C controller
+    i2c_write (X"0000000", X"1234");
     wait until rising_edge(clk);
-    i2c_verify(X"00", X"1234");
+    i2c_verify(X"0000000", X"1234");
     wait until rising_edge(clk);
     wait until rising_edge(clk);
     wait until rising_edge(clk);
@@ -205,20 +205,21 @@ begin
 
     -- Verify access to RTC
     rtc_write(X"08", X"0000");
-    rtc_write(X"09", X"0002");
+    rtc_write(X"08", X"0002");
     wait until rising_edge(clk);
-    rtc_verify(X"08", X"0000");
-    rtc_verify(X"09", X"0001");
+    rtc_verify(X"08", X"0001");
     wait for 200 us;
     wait until rising_edge(clk);
     rtc_verify(X"08", X"0000");
-    rtc_verify(X"09", X"0000");
     wait until rising_edge(clk);
     wait until rising_edge(clk);
 
     assert rtc = "0" & X"40" & C_RTC_NEW(63 downto 8)
       report "Incorrect rtc new. Got: " & to_hstring(rtc) &
              ", Expected:" & to_hstring("0" & X"40" & C_RTC_NEW(63 downto 8));
+
+    -- Verify memorymap access to RTC
+    i2c_verify(X"00" & "0" & std_logic_vector(C_I2C_ADDRESS) & X"100", X"00" & C_RTC_NEW(15 downto 8));
 
     wait until rising_edge(clk);
     report "Test completed";
