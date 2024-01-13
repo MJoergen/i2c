@@ -75,6 +75,8 @@ architecture simulation of rtc_sim is
 
    constant C_INIT : std_logic_vector(63 downto 0) := int2board(G_BOARD, G_INIT);
 
+   signal err : std_logic := '0';
+
 begin
 
   ----------------------------------------------
@@ -100,7 +102,7 @@ begin
       sda_out_o     => sda_out
     ); -- i_i2c_controller
 
-  sda <= sda_out(0) when sda_out(0) = '0' else 'H';
+  sda <= sda_out(0) or err when sda_out(0) = '0' else 'H';
   scl <= scl_out(0) when scl_out(0) = '0' else 'H';
   sda_in(0) <= sda;
   scl_in(0) <= scl;
@@ -108,6 +110,15 @@ begin
   -- Pull-up
   scl <= 'H';
   sda <= 'H';
+
+  -- Disrupt I2C communication for some time
+  err_proc : process
+  begin
+     err <= '1';
+     wait for 100 us;
+     err <= '0';
+     wait;
+  end process err_proc;
 
 
   ------------------------------------
