@@ -89,17 +89,19 @@ architecture synthesis of rtc_master is
   constant C_ACTION_LIST_WRITE_R3 : action_list_t := (
     -- This writes to the RTC
     0 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-     1 => (WRITE_CMD,     X"00", X"0841"),   -- Prepare to write 0x41 to address 0x08
-     2 => (WRITE_CMD,     X"F0", X"02DE"),   -- Send two bytes to RTC
+    1 => (WRITE_CMD,     X"00", X"0841"),   -- Prepare to write 0x41 to address 0x08
+    2 => (WRITE_CMD,     X"F0", X"02DE"),   -- Send two bytes to RTC
     3 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
     4 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-     5 => (SHIFT_OUT_CMD, X"00", X"0005"),   -- Prepare to write to RTC
-     6 => (WRITE_CMD,     X"F0", X"08DE"),   -- Send eight bytes to RTC
-     7 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
-     8 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
-     9 => (WRITE_CMD,     X"00", X"0801"),   -- Prepare to write 0x01 to address 0x08
-    10 => (WRITE_CMD,     X"F0", X"02DE"),   -- Send two bytes from RTC
-    11 => (END_CMD,       X"00", X"0000")
+    5 => (SHIFT_OUT_CMD, X"00", X"0005"),   -- Prepare to write to RTC
+    6 => (WRITE_CMD,     X"F0", X"08DE"),   -- Send eight bytes to RTC
+    7 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
+    8 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
+    9 => (WRITE_CMD,     X"00", X"0801"),   -- Prepare to write 0x01 to address 0x08
+   10 => (WRITE_CMD,     X"F0", X"02DE"),   -- Send two bytes to RTC
+   11 => (WAIT_CMD,      X"F1", X"0000"),   -- Wait until I2C command is accepted
+   12 => (WAIT_CMD,      X"F1", X"0001"),   -- Wait until I2C is idle
+   13 => (END_CMD,       X"00", X"0000")
    );
 
   -- For the R5 board:
@@ -190,7 +192,8 @@ architecture synthesis of rtc_master is
   pure function pre_write(board : string; arg : std_logic_vector) return std_logic_vector is
   begin
     if board = "MEGA65_R3" then
-      return X"00" & arg(63 downto 8) & X"00";
+      -- Set 24-hour format
+      return (X"00" & arg(63 downto 8) & X"00") or X"00_00_00_00_00_80_00_00_00";
     else
       -- Valid for R4, R5, and R6
       return arg(55 downto 32) & arg(63 downto 56) & arg(31 downto 0) & X"00";

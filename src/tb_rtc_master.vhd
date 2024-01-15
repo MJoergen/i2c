@@ -27,7 +27,32 @@ architecture simulation of tb_rtc_master is
   signal cpu_wr_data : std_logic_vector(15 downto 0);
   signal cpu_rd_data : std_logic_vector(15 downto 0);
 
+  signal rtc_board   : unsigned(63 downto 0);
   signal rtc_value   : unsigned(63 downto 0);
+
+  -- Call this after reading from RTC
+  pure function board2int(board : string; arg : std_logic_vector) return std_logic_vector is
+  begin
+    if board = "MEGA65_R3" then
+      -- Assume 24-hour mode
+      return (arg(55 downto 0) & X"00") and X"FF_FF_FF_FF_7F_FF_FF_FF";
+    else
+       -- Valid for R4 and R5
+      return arg(39 downto 32) & arg(63 downto 40) & arg(31 downto 0);
+    end if;
+  end function board2int;
+
+  -- Call this before writing to RTC
+  pure function int2board(board : string; arg : std_logic_vector) return std_logic_vector is
+  begin
+    if board = "MEGA65_R3" then
+       -- Set 24-hour mode
+      return (X"00" & arg(63 downto 8)) or X"00_00_00_00_00_80_00_00";
+    else
+       -- Valid for R4 and R5
+      return arg(55 downto 32) & arg(63 downto 56) & arg(31 downto 0);
+    end if;
+  end function int2board;
 
   pure function get_rtc_mask(board : string) return unsigned is
   begin
@@ -153,7 +178,7 @@ begin
 
    rtc_sim_inst : entity work.rtc_sim
       generic map (
-         G_INIT  => std_logic_vector(C_INIT_RTC_VALUE),
+         G_INIT  => int2board(G_BOARD, std_logic_vector(C_INIT_RTC_VALUE)),
          G_BOARD => G_BOARD
       )
       port map (
@@ -165,8 +190,10 @@ begin
          cpu_addr_i    => cpu_addr,
          cpu_wr_data_i => cpu_wr_data,
          cpu_rd_data_o => cpu_rd_data,
-         rtc_o         => rtc_value
+         rtc_o         => rtc_board
       ); -- rtc_sim_inst
+
+  rtc_value <= unsigned(board2int(G_BOARD, std_logic_vector(rtc_board)));
 
 end architecture simulation;
 

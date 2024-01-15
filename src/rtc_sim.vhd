@@ -51,30 +51,6 @@ architecture simulation of rtc_sim is
 
    constant C_I2C_ADDRESS : unsigned(6 downto 0) := get_i2c_address(G_BOARD);
 
-   -- Call this after reading from RTC
-   pure function board2int(board : string; arg : std_logic_vector) return std_logic_vector is
-   begin
-     if board = "MEGA65_R3" then
-       return arg(55 downto 0) & X"00";
-     else
-       -- Valid for R4 and R5
-       return arg(39 downto 32) & arg(63 downto 40) & arg(31 downto 0);
-     end if;
-   end function board2int;
-
-   -- Call this before writing to RTC
-   pure function int2board(board : string; arg : std_logic_vector) return std_logic_vector is
-   begin
-     if board = "MEGA65_R3" then
-       return X"00" & arg(63 downto 8);
-     else
-       -- Valid for R4 and R5
-       return arg(55 downto 32) & arg(63 downto 56) & arg(31 downto 0);
-     end if;
-   end function int2board;
-
-   constant C_INIT : std_logic_vector(63 downto 0) := int2board(G_BOARD, G_INIT);
-
    signal err : std_logic := '0';
 
 begin
@@ -127,7 +103,7 @@ begin
 
   i2c_mem_sim_inst : entity work.i2c_mem_sim
      generic map (
-       G_INIT        => C_INIT,
+       G_INIT        => G_INIT,
        G_CLOCK_FREQ  => 50e6,
        G_I2C_ADDRESS => C_I2C_ADDRESS
      )
@@ -141,7 +117,7 @@ begin
         scl_io       => scl
      ); -- i2c_mem_sim_inst
 
-  rtc_o <= unsigned(board2int(G_BOARD, std_logic_vector(rtc)));
+  rtc_o <= rtc;
 
 end architecture simulation;
 
